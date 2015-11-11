@@ -4,7 +4,7 @@ var harmony = require('harmonyhubjs-client'),
     debug = require('debug')('harmonyHub:util'),
     EventEmitter = require('events').EventEmitter,
     Q = require('q'),
-    harmonyClient;
+    harmonyClient;exe
 
 
 function HarmonyHubUtil(ip) {
@@ -64,30 +64,36 @@ function executeActivity(act) {
     return deferred.promise;
 }
 
-function executeDeviceCommand(device, command) {
+  
+function executeDeviceCommand(device, commandx) {
     var deferred = Q.defer(),
         self = this;
-
+    //console.log("XXXXX: " + device + "==" + commandx)
     self._harmonyClient.getAvailableCommands()
         .then(function (commands) {
             commands.device.filter(function (dev) {
+              var command_array = commandx.split(',');
+              for(var i = 0; i < command_array.length; i++) {
                 if (dev.label === device) {
                     dev.controlGroup.filter(function (group) {
                         group['function'].filter(function (action) {
                             var encodedAction, dt;
-                            if (JSON.parse(action.action).command === command) {
-                                console.log("Triggering On device " + device + " command " + command);
+                            if (JSON.parse(action.action).command === command_array[i]) {
+                                console.log("Triggering On device " + device + " command " + command_array[i]);
                                 encodedAction = action.action.replace(/\:/g, '::');
                                 dt = 'action=' + encodedAction + ':status=press';
                                 //console.log("Sending Action = " + dt);
                                 self._harmonyClient.send('holdAction', dt).then(function () {
                                     deferred.resolve(true);
                                 });
+                                var sleep = require('thread-sleep');
+                                sleep(500); //delay between subsequent commands
                                 return;
                             }
                         });
                     });
-                }
+                  }//if(dev.label)
+              } //for
             });
         });
     return deferred.promise;
